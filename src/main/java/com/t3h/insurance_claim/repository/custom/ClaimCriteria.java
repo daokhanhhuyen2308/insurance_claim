@@ -20,7 +20,7 @@ public class ClaimCriteria {
     private final EntityManager em;
 
     public Page<ClaimEntity> getAllClaimsByCondition(ClaimRequestFilter requestFilter, Pageable pages) {
-        StringBuilder sql = new StringBuilder("select c from ClaimEntity c inner join c.claimStatusEntity cs where 1=1");
+        StringBuilder sql = new StringBuilder("select c from ClaimEntity c left join c.claimStatusEntity cs where 1=1");
 
         Map<String, Object> params = new HashMap<>();
 
@@ -43,8 +43,6 @@ public class ClaimCriteria {
             sql.append(" and c.claimDate <= :toDateSearch");
             params.put("toDateSearch", requestFilter.getToDateSearch());
         }
-
-        sql.append(" and c.deleted = false or c.deleted is null");
 
         TypedQuery<ClaimEntity> tQuery = em.createQuery(sql.toString(), ClaimEntity.class);
 

@@ -3,6 +3,7 @@ package com.t3h.insurance_claim.service.impl;
 import com.t3h.insurance_claim.dto.requests.ClaimCreationRequest;
 import com.t3h.insurance_claim.dto.requests.ClaimRequestFilter;
 import com.t3h.insurance_claim.dto.responses.ClaimResponse;
+import com.t3h.insurance_claim.dto.responses.ResponsePage;
 import com.t3h.insurance_claim.entity.ClaimEntity;
 import com.t3h.insurance_claim.mapper.ClaimMapper;
 import com.t3h.insurance_claim.repository.ClaimRepository;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -40,12 +42,23 @@ public class ClaimServiceImpl implements IClaimService {
     }
 
     @Override
-    public Page<ClaimResponse> getAllClaimsByConditions(ClaimRequestFilter requestFilter, int page, int size) {
+    public ResponsePage<List<ClaimResponse>> getAllClaimsByConditions(ClaimRequestFilter filter, int page, int size) {
 
         Pageable pages = PageRequest.of(page, size);
 
-        Page<ClaimEntity> claims = claimCriteria.getAllClaimsByCondition(requestFilter, pages);
+//        Page<ClaimEntity> claims = claimCriteria.getAllClaimsByCondition(filter, pages);
 
-        return claims.map(ClaimMapper::mapToResponse);
+        filter.setFromDateSearch(LocalDate.of(1900,1,1));
+        Page<ClaimEntity> claims = claimRepository.findByCondition(filter, pages);
+
+        List<ClaimResponse> claimResponses = claims.stream().map(ClaimMapper::mapToResponse).toList();
+
+        return ResponsePage.<List<ClaimResponse>>builder()
+                .content(claimResponses)
+                .pageNumbers(claims.getNumber())
+                .pageSize(claims.getSize())
+                .totalPages(claims.getTotalPages())
+                .totalElements((int) claims.getTotalElements())
+                .build();
     }
 }
